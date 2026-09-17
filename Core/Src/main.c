@@ -319,7 +319,7 @@ void LogPLC(const char* prefix) {
   * @retval int
   */
 int main(void)
-{
+{ // teste
 
   /* USER CODE BEGIN 1 */
 
