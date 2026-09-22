@@ -316,10 +316,9 @@ void LogPLC(const char* prefix) {
       HAL_UART_Transmit(&huart1, (uint8_t*)msg, pos, 200);
 
       //snprintf(&TxBuffer[0],2,"OK");
-      TxBuffer[0] = 'O';
-      TxBuffer[1] = 'K';
-      HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
-      HAL_UART_Transmit_DMA(&huart3, (uint8_t*)TxBuffer, 2);
+
+   //   HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
+
     //  HAL_UART_Transmit(&huart3, (uint8_t*)msg, pos, 200);
       // HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
    // HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, SET);
@@ -378,7 +377,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim1);
   // Plc_OnOffDelay(&fb[0]zmienna, in[2]wejście, 10czas on, 2czas off,aut_podawanie,0-gdy off automatyka);// załącza po 10 wyłacza po 2
 	while (1) {
-		/*if (ModbusFrameReceived == 1)
+		if (ModbusFrameReceived == 1)
 		    {
 		        ModbusFrameReceived = 0; // Kasowanie flagi
 
@@ -392,7 +391,7 @@ int main(void)
 		        // Zamiast sztywnej długości, podajemy ModbusFrameLength.
 		        HAL_UART_Transmit_DMA(&huart3, RxBuffer, ModbusFrameLength);
 		    }
-        */
+
 		HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, 6);
 
 		ReadInputs();
@@ -851,10 +850,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART3)
     {
         // 1. Transmisja fizycznie zakończona - przełączamy RS485 z powrotem na odbiór
-       // HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
 
         // 2. Ponownie uruchamiamy nasłuchiwanie nowych zapytań od Mastera
-      //  HAL_UARTEx_ReceiveToIdle_DMA(&huart3, RxBuffer, 256);
+       HAL_UARTEx_ReceiveToIdle_DMA(&huart3, RxBuffer, 256);
     }
 }
 
