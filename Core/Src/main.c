@@ -49,6 +49,8 @@ TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart3_rx;
+DMA_HandleTypeDef hdma_usart3_tx;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t timer_ready = 0;
@@ -67,6 +69,11 @@ uint16_t adc_buffer[6]; // Bufor dla DMA (6 kanałów)
 uint16_t val_ch1, val_ch3, val_ch10, val_ch11, val_ch14, val_ch15;
 // W sekcji USER CODE BEGIN PV
 uint16_t current_ch1, current_ch3, current_ch14; // Prąd w mA (np. 1250 = 1.25A)
+
+uint8_t RxBuffer[256];
+uint8_t TxBuffer[256];
+volatile uint8_t ModbusFrameReceived = 0; // Flaga odebrania danych
+volatile uint16_t ModbusFrameLength = 0;  // Długość odebranej ramki
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -306,9 +313,16 @@ void LogPLC(const char* prefix) {
     pos += snprintf(&msg[pos], 250 - pos, " I(mA): %04u %04u %04u out: %04u %04u\r\n",
                     current_ch1, current_ch3, current_ch14,DAC_ch1,DAC_ch2);
     // WYSYŁKA: Zwiększony Timeout do 200ms, aby cała ramka zdążyła wyjść
-    HAL_UART_Transmit(&huart1, (uint8_t*)msg, pos, 200);
-    HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, SET);
-    HAL_UART_Transmit(&huart3, (uint8_t*)msg, pos, 200); // rs485
+      HAL_UART_Transmit(&huart1, (uint8_t*)msg, pos, 200);
+
+      //snprintf(&TxBuffer[0],2,"OK");
+      TxBuffer[0] = 'O';
+      TxBuffer[1] = 'K';
+      HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
+      HAL_UART_Transmit_DMA(&huart3, (uint8_t*)TxBuffer, 2);
+    //  HAL_UART_Transmit(&huart3, (uint8_t*)msg, pos, 200);
+      // HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
+   // HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, SET);
 
 }
 
@@ -319,7 +333,7 @@ void LogPLC(const char* prefix) {
   * @retval int
   */
 int main(void)
-{ // teste
+{
 
   /* USER CODE BEGIN 1 */
 
@@ -351,7 +365,11 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, 6);
+  // Ustawienie pinu kierunku na odbiór
+  HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
 
+  // Uruchomienie nasłuchu DMA z detekcją IDLE na maksymalnie 256 bajtów
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart3, RxBuffer, 256);
 
   /* USER CODE END 2 */
 
@@ -360,42 +378,37 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim1);
   // Plc_OnOffDelay(&fb[0]zmienna, in[2]wejście, 10czas on, 2czas off,aut_podawanie,0-gdy off automatyka);// załącza po 10 wyłacza po 2
 	while (1) {
+		/*if (ModbusFrameReceived == 1)
+		    {
+		        ModbusFrameReceived = 0; // Kasowanie flagi
+
+		        // 1. Skopiowanie odebranych bajtów z bufora RX do bufora TX.
+		        // Używamy zmiennej ModbusFrameLength, która przechowuje dokładną liczbę odebranych bajtów.
+		        memcpy(TxBuffer, RxBuffer, ModbusFrameLength);
+
+		        // 2. Przełączenie układu RS485 w tryb nadawania (stan wysoki na pinie sterującym)
+		        HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
+		        // 3. Rozpoczęcie wysyłania skopiowanych danych przez DMA
+		        // Zamiast sztywnej długości, podajemy ModbusFrameLength.
+		        HAL_UART_Transmit_DMA(&huart3, RxBuffer, ModbusFrameLength);
+		    }
+        */
 		HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, 6);
+
 		ReadInputs();
-		if(in[0]==1){aut_podawanie=1;}else{aut_podawanie=0;}
-		if(in[1]==1){aut_g1=1;}else{aut_g1=0;DAC_ch1=0;}
-		if(in[2]==1){aut_g2=1;}else{aut_g2=0;DAC_ch2=0;}
-
-// podawanie
-		stop_ssanie 	= Plc_OnOffDelay(&fb[0], in[3], 50, 10,aut_podawanie,0);// załącza po 10 wyłacza po 2
-		stop_mlyn 		= Plc_OnOffDelay(&fb[1], in[4], 50, 10,aut_podawanie,0);// załącza po 10 wyłacza po 2
-		stop_mieszadlo	= Plc_OnOffDelay(&fb[2], in[5], 50, 10,aut_podawanie,0);// załącza po 10 wyłacza po 2
-        stop_inne		= Plc_OnOffDelay(&fb[7], !in[6], 50, 10,aut_podawanie,0);// załącza po 10 wyłacza po 2
-
-        out[0] =Plc_OnOffDelay(&fb[3],stop_mieszadlo && stop_mlyn && stop_ssanie && stop_inne , 1, 1,aut_podawanie,0);// taśma
-        out[1] = Plc_OnOffDelay(&fb[5],out[0], 50, 2,aut_podawanie,0);// stół
-        out[2] = Plc_OnOffDelay(&fb[6],out[0], 100, 2,aut_podawanie,0);// bemben
-
-// granulator 1
-        uint8_t power_g1;
-        power_g1=Plc_OnOffDelay(&fb[9],current_ch3<4000, 20, 5,aut_g1,0); // power g1 - 1 gdy nie przeciązony
-        out[4]=Plc_OnOffDelay(&fb[8],in[10] && power_g1, 20, 5,aut_g1,0);// dopychacz
-        out[6]=Plc_OnOffDelay(&fb[10],out[4] && power_g1, 20, 5,aut_g1,0);// kondycjoner
-        if(in[10] == 1){
 
 
-        }else{DAC_ch1 = 0;}
 
         //DAC_ch1 = 1000;
        // DAC_ch2 = 2000;
 
 
         HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, DAC_ch1);
-
         HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, DAC_ch2);
         HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
         HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
 		LogPLC("V1.4 ");
+
 		UpdateADC(); // Aktualizujemy zmienne pomocnicze
 		while(timer_ready == 0);
 		timer_ready = 0;
@@ -716,6 +729,12 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
 
@@ -817,6 +836,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         timer_ready = 1; // Ustaw flagę co 100ms
     }
 }
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    if (huart->Instance == USART3)
+    {
+        // Zapisujemy ile bajtów faktycznie przyszło
+        ModbusFrameLength = Size;
+        // Podnosimy flagę dla pętli głównej
+        ModbusFrameReceived = 1;
+    }
+}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART3)
+    {
+        // 1. Transmisja fizycznie zakończona - przełączamy RS485 z powrotem na odbiór
+       // HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
+
+        // 2. Ponownie uruchamiamy nasłuchiwanie nowych zapytań od Mastera
+      //  HAL_UARTEx_ReceiveToIdle_DMA(&huart3, RxBuffer, 256);
+    }
+}
+
+
 /* USER CODE END 4 */
 
 /**

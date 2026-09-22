@@ -118,6 +118,10 @@ void Error_Handler(void);
 #define rs485_GPIO_Port GPIOA
 #define i2c_SCL_Pin GPIO_PIN_15
 #define i2c_SCL_GPIO_Port GPIOA
+#define rs485_TX_Pin GPIO_PIN_10
+#define rs485_TX_GPIO_Port GPIOC
+#define rs485_RX_Pin GPIO_PIN_11
+#define rs485_RX_GPIO_Port GPIOC
 #define out4_Pin GPIO_PIN_3
 #define out4_GPIO_Port GPIOB
 
