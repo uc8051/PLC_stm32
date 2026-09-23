@@ -21,7 +21,7 @@ void PLC_Run(void)
      * TUTAJ PROGRAM STEROWNIKA
      */
 
-    if (IN(1)) {
+   /* if (IN(1)) {
         OUT(1, ON);
     } else {
         OUT(1, OFF);
@@ -40,7 +40,7 @@ void PLC_Run(void)
         OUT(5, OFF);
         OUT(6, OFF);
 
-    }
+    }*/
 
 
 }

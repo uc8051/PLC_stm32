@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include "io.h"
 #include "plc.h"
+#include "rs485.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,11 +74,8 @@ uint16_t val_ch1, val_ch3, val_ch10, val_ch11, val_ch14, val_ch15;
 // W sekcji USER CODE BEGIN PV
 uint16_t current_ch1, current_ch3, current_ch14; // Prąd w mA (np. 1250 = 1.25A)
 
-uint8_t U3_RxBuffer[256];
-uint8_t U3_TxBuffer[256];
-volatile uint8_t U3_Received = 0; // Flaga odebrania danych
-volatile uint16_t U3_size_RX = 0;  // Długość odebranej ramki
-volatile uint16_t U3_size_TX = 0;  // Długość nadawanej ramki
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -372,7 +370,7 @@ int main(void)
   HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
 
   // Uruchomienie nasłuchu DMA z detekcją IDLE na maksymalnie 256 bajtów
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart3, U3_RxBuffer, 256);
+ // init_rx_rs485();
 
   PLC_Init();
 
@@ -383,45 +381,8 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim1);
   // Plc_OnOffDelay(&fb[0]zmienna, in[2]wejście, 10czas on, 2czas off,aut_podawanie,0-gdy off automatyka);// załącza po 10 wyłacza po 2
 	while (1) {
-		if (U3_Received == 1)
-		    { 	uint16_t  crc;
-		    	unsigned char s_crc[10];
-		        U3_Received = 0; // Kasowanie flagi
-
-		        // 1. Skopiowanie odebranych bajtów z bufora RX do bufora TX.
-		        // Używamy zmiennej ModbusFrameLength, która przechowuje dokładną liczbę odebranych bajtów.
-		       if(U3_size_RX > 4)
-		       {
-		    	   memcpy(U3_TxBuffer, U3_RxBuffer,U3_size_RX);
-	               crc = mmodbus_crc16(U3_RxBuffer, U3_size_RX-4);
-	               sprintf((char*)s_crc,"%04X",crc);
-	               if(U3_RxBuffer[U3_size_RX-1] == s_crc[3] && U3_RxBuffer[U3_size_RX-2] == s_crc[2] && U3_RxBuffer[U3_size_RX-3] == s_crc[1] && U3_RxBuffer[U3_size_RX-4] == s_crc[0])
-	                  { // dobra ramka
-	            	   HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
-	            	   U3_size_TX = 0;
-	            	   U3_size_TX += sprintf(&U3_TxBuffer,"OK");
-	            	   HAL_UART_Transmit_DMA(&huart3, U3_TxBuffer, U3_size_TX);
-
-                      }
-	               else
-	               {
-	            	   HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
-	            	   U3_size_TX = 0;
-	        	   U3_size_TX += sprintf(&U3_TxBuffer,"suma");
-	        	   HAL_UART_Transmit_DMA(&huart3, U3_TxBuffer, U3_size_TX);
-
-	               }
-		       }
-		       else
-		       {HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
-		    	   U3_size_TX = 0;
-        	   U3_size_TX += sprintf(&U3_TxBuffer,"Erorr");
-        	   HAL_UART_Transmit_DMA(&huart3, U3_TxBuffer, U3_size_TX);
-
-		       }
 
 
-		    }
 
 		HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, 6);
 
