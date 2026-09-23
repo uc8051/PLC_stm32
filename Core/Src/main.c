@@ -22,6 +22,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
+#include <stdbool.h>
+#include "io.h"
+#include "plc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,10 +73,11 @@ uint16_t val_ch1, val_ch3, val_ch10, val_ch11, val_ch14, val_ch15;
 // W sekcji USER CODE BEGIN PV
 uint16_t current_ch1, current_ch3, current_ch14; // Prąd w mA (np. 1250 = 1.25A)
 
-uint8_t u3RxBuffer[256];
-uint8_t ModbusTxBuffer[256];
-volatile uint8_t u3Received = 0; // Flaga odebrania danych
-volatile uint16_t size_u3RX = 0;  // Długość odebranej ramki
+uint8_t U3_RxBuffer[256];
+uint8_t U3_TxBuffer[256];
+volatile uint8_t U3_Received = 0; // Flaga odebrania danych
+volatile uint16_t U3_size_RX = 0;  // Długość odebranej ramki
+volatile uint16_t U3_size_TX = 0;  // Długość nadawanej ramki
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -252,14 +256,14 @@ uint8_t Plc_OnOffDelay(PlcDelay_t* fb,
 
 void ReadInputs(void)
 {
-    in[0]  = (HAL_GPIO_ReadPin(in0_GPIO_Port,  in0_Pin)  == GPIO_PIN_RESET);
-    in[1]  = (HAL_GPIO_ReadPin(in1_GPIO_Port,  in1_Pin)  == GPIO_PIN_RESET);
-    in[2]  = (HAL_GPIO_ReadPin(in2_GPIO_Port,  in2_Pin)  == GPIO_PIN_RESET);
-    in[3]  = (HAL_GPIO_ReadPin(in3_GPIO_Port,  in3_Pin)  == GPIO_PIN_RESET);
-    in[4]  = (HAL_GPIO_ReadPin(in4_GPIO_Port,  in4_Pin)  == GPIO_PIN_RESET);
-    in[5]  = (HAL_GPIO_ReadPin(in5_GPIO_Port,  in5_Pin)  == GPIO_PIN_RESET);
-    in[6]  = (HAL_GPIO_ReadPin(in6_GPIO_Port,  in6_Pin)  == GPIO_PIN_RESET);
-    in[7]  = (HAL_GPIO_ReadPin(in7_GPIO_Port,  in7_Pin)  == GPIO_PIN_RESET);
+    in[0]  = (HAL_GPIO_ReadPin(in00_GPIO_Port,  in00_Pin)  == GPIO_PIN_RESET);
+    in[1]  = (HAL_GPIO_ReadPin(in01_GPIO_Port,  in01_Pin)  == GPIO_PIN_RESET);
+    in[2]  = (HAL_GPIO_ReadPin(in02_GPIO_Port,  in02_Pin)  == GPIO_PIN_RESET);
+    in[3]  = (HAL_GPIO_ReadPin(in03_GPIO_Port,  in03_Pin)  == GPIO_PIN_RESET);
+    in[4]  = (HAL_GPIO_ReadPin(in04_GPIO_Port,  in04_Pin)  == GPIO_PIN_RESET);
+    in[5]  = (HAL_GPIO_ReadPin(in05_GPIO_Port,  in05_Pin)  == GPIO_PIN_RESET);
+    in[6]  = (HAL_GPIO_ReadPin(in06_GPIO_Port,  in06_Pin)  == GPIO_PIN_RESET);
+    in[7]  = (HAL_GPIO_ReadPin(in07_GPIO_Port,  in07_Pin)  == GPIO_PIN_RESET);
     in[8] = 2;
     in[9] = 2;
     // pomijamy 8 i 9
@@ -273,14 +277,14 @@ void ReadInputs(void)
 }
 void WriteOutputs(void)
 {
-    HAL_GPIO_WritePin(out0_GPIO_Port,  out0_Pin,  out[0]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out1_GPIO_Port,  out1_Pin,  out[1]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out2_GPIO_Port,  out2_Pin,  out[2]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out3_GPIO_Port,  out3_Pin,  out[3]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out4_GPIO_Port,  out4_Pin,  out[4]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out5_GPIO_Port,  out5_Pin,  out[5]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out6_GPIO_Port,  out6_Pin,  out[6]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out7_GPIO_Port,  out7_Pin,  out[7]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out00_GPIO_Port,  out00_Pin,  out[0]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out01_GPIO_Port,  out01_Pin,  out[1]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out02_GPIO_Port,  out02_Pin,  out[2]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out03_GPIO_Port,  out03_Pin,  out[3]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out04_GPIO_Port,  out04_Pin,  out[4]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out05_GPIO_Port,  out05_Pin,  out[5]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out06_GPIO_Port,  out06_Pin,  out[6]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out07_GPIO_Port,  out07_Pin,  out[7]  ? GPIO_PIN_SET : GPIO_PIN_RESET);
     out[8] = 2;
     out[9] = 2;
     HAL_GPIO_WritePin(out10_GPIO_Port, out10_Pin, out[10] ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -368,7 +372,9 @@ int main(void)
   HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
 
   // Uruchomienie nasłuchu DMA z detekcją IDLE na maksymalnie 256 bajtów
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart3, u3RxBuffer, 256);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart3, U3_RxBuffer, 256);
+
+  PLC_Init();
 
   /* USER CODE END 2 */
 
@@ -377,28 +383,40 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim1);
   // Plc_OnOffDelay(&fb[0]zmienna, in[2]wejście, 10czas on, 2czas off,aut_podawanie,0-gdy off automatyka);// załącza po 10 wyłacza po 2
 	while (1) {
-		if (u3Received == 1)
+		if (U3_Received == 1)
 		    { 	uint16_t  crc;
-		        u3Received = 0; // Kasowanie flagi
+		    	unsigned char s_crc[10];
+		        U3_Received = 0; // Kasowanie flagi
 
 		        // 1. Skopiowanie odebranych bajtów z bufora RX do bufora TX.
 		        // Używamy zmiennej ModbusFrameLength, która przechowuje dokładną liczbę odebranych bajtów.
-		       if(size_u3RX > 4)
+		       if(U3_size_RX > 4)
 		       {
-		    	   memcpy(ModbusTxBuffer, u3RxBuffer,ModbusFrameLength );
-	               crc = mmodbus_crc16(RxBuffer, size_u2RX-4);
-	               if(MainBuf[size_u3RX-1] == MSG1[3] && MainBuf[size_u3RX-2] == MSG1[2] && MainBuf[size_u3RX-3] == MSG1[1] && MainBuf[size_u3RX-4] == MSG1[0])
+		    	   memcpy(U3_TxBuffer, U3_RxBuffer,U3_size_RX);
+	               crc = mmodbus_crc16(U3_RxBuffer, U3_size_RX-4);
+	               sprintf((char*)s_crc,"%04X",crc);
+	               if(U3_RxBuffer[U3_size_RX-1] == s_crc[3] && U3_RxBuffer[U3_size_RX-2] == s_crc[2] && U3_RxBuffer[U3_size_RX-3] == s_crc[1] && U3_RxBuffer[U3_size_RX-4] == s_crc[0])
 	                  { // dobra ramka
 	            	   HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
-	            	   size_u3RX = 0;
-	            	   size_u3RX += snprintf(&msg[pos], 250 - pos, "%.5s: in:", prefix);
-	            	   HAL_UART_Transmit_DMA(&huart3, u3RxBuffer, size_u3RX);
+	            	   U3_size_TX = 0;
+	            	   U3_size_TX += sprintf(&U3_TxBuffer,"OK");
+	            	   HAL_UART_Transmit_DMA(&huart3, U3_TxBuffer, U3_size_TX);
 
+                      }
+	               else
+	               {
+	            	   HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
+	            	   U3_size_TX = 0;
+	        	   U3_size_TX += sprintf(&U3_TxBuffer,"suma");
+	        	   HAL_UART_Transmit_DMA(&huart3, U3_TxBuffer, U3_size_TX);
 
-	                  }
+	               }
 		       }
 		       else
-		       {//bład ramki coś robic ?
+		       {HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_SET);
+		    	   U3_size_TX = 0;
+        	   U3_size_TX += sprintf(&U3_TxBuffer,"Erorr");
+        	   HAL_UART_Transmit_DMA(&huart3, U3_TxBuffer, U3_size_TX);
 
 		       }
 
@@ -407,8 +425,12 @@ int main(void)
 
 		HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, 6);
 
-		ReadInputs();
+		//ReadInputs();
+	    IO_ReadInputs();
 
+	    PLC_Run();
+
+	    IO_WriteOutputs();
 
 
         //DAC_ch1 = 1000;
@@ -425,7 +447,7 @@ int main(void)
 		while(timer_ready == 0);
 		timer_ready = 0;
 		//HAL_Delay(100);
-		WriteOutputs();
+		//WriteOutputs();
 
     /* USER CODE END WHILE */
 
@@ -770,61 +792,61 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, out3_Pin|out11_Pin|out10_Pin|out7_Pin
-                          |out2_Pin|i2c_SDA_Pin|rs485_Pin|i2c_SCL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, out03_Pin|out11_Pin|out10_Pin|out07_Pin
+                          |out02_Pin|i2c_SDA_Pin|rs485_Pin|i2c_SCL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, out6_Pin|out4_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, out06_Pin|out04_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(out5_GPIO_Port, out5_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(out05_GPIO_Port, out05_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, out1_Pin|out0_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, out01_Pin|out00_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : out3_Pin out11_Pin out10_Pin out7_Pin
-                           out2_Pin rs485_Pin */
-  GPIO_InitStruct.Pin = out3_Pin|out11_Pin|out10_Pin|out7_Pin
-                          |out2_Pin|rs485_Pin;
+  /*Configure GPIO pins : out03_Pin out11_Pin out10_Pin out07_Pin
+                           out02_Pin rs485_Pin */
+  GPIO_InitStruct.Pin = out03_Pin|out11_Pin|out10_Pin|out07_Pin
+                          |out02_Pin|rs485_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : in14_Pin in15_Pin in12_Pin in13_Pin
-                           in10_Pin in11_Pin in6_Pin in7_Pin
-                           in4_Pin */
+                           in10_Pin in11_Pin in06_Pin in07_Pin
+                           in04_Pin */
   GPIO_InitStruct.Pin = in14_Pin|in15_Pin|in12_Pin|in13_Pin
-                          |in10_Pin|in11_Pin|in6_Pin|in7_Pin
-                          |in4_Pin;
+                          |in10_Pin|in11_Pin|in06_Pin|in07_Pin
+                          |in04_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : in5_Pin in2_Pin in3_Pin in0_Pin
-                           in1_Pin */
-  GPIO_InitStruct.Pin = in5_Pin|in2_Pin|in3_Pin|in0_Pin
-                          |in1_Pin;
+  /*Configure GPIO pins : in05_Pin in02_Pin in03_Pin in00_Pin
+                           in01_Pin */
+  GPIO_InitStruct.Pin = in05_Pin|in02_Pin|in03_Pin|in00_Pin
+                          |in01_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : out6_Pin out4_Pin */
-  GPIO_InitStruct.Pin = out6_Pin|out4_Pin;
+  /*Configure GPIO pins : out06_Pin out04_Pin */
+  GPIO_InitStruct.Pin = out06_Pin|out04_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : out5_Pin */
-  GPIO_InitStruct.Pin = out5_Pin;
+  /*Configure GPIO pin : out05_Pin */
+  GPIO_InitStruct.Pin = out05_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(out5_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(out05_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : out1_Pin out0_Pin */
-  GPIO_InitStruct.Pin = out1_Pin|out0_Pin;
+  /*Configure GPIO pins : out01_Pin out00_Pin */
+  GPIO_InitStruct.Pin = out01_Pin|out00_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -853,9 +875,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if (huart->Instance == USART3)
     {
         // Zapisujemy ile bajtów faktycznie przyszło
-        ModbusFrameLength = Size;
+        U3_size_RX = Size;
         // Podnosimy flagę dla pętli głównej
-        u3Received = 1;
+        U3_Received = 1;
     }
 }
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
@@ -866,7 +888,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
         HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
 
         // 2. Ponownie uruchamiamy nasłuchiwanie nowych zapytań od Mastera
-       HAL_UARTEx_ReceiveToIdle_DMA(&huart3, u3RxBuffer, 256);
+       HAL_UARTEx_ReceiveToIdle_DMA(&huart3, U3_RxBuffer, 256);
     }
 }
 
@@ -884,22 +906,22 @@ void Error_Handler(void)
 	__disable_irq();
 	while (1) {
 	}
-	HAL_GPIO_WritePin(out0_GPIO_Port, out0_Pin,
-			HAL_GPIO_ReadPin(in0_GPIO_Port, in0_Pin));
-	HAL_GPIO_WritePin(out1_GPIO_Port, out1_Pin,
-			HAL_GPIO_ReadPin(in1_GPIO_Port, in1_Pin));
-	HAL_GPIO_WritePin(out2_GPIO_Port, out2_Pin,
+	HAL_GPIO_WritePin(out00_GPIO_Port, out00_Pin,
+			HAL_GPIO_ReadPin(in00_GPIO_Port, in00_Pin));
+	HAL_GPIO_WritePin(out01_GPIO_Port, out01_Pin,
+			HAL_GPIO_ReadPin(in01_GPIO_Port, in01_Pin));
+	HAL_GPIO_WritePin(out02_GPIO_Port, out02_Pin,
 			HAL_GPIO_ReadPin(in12_GPIO_Port, in12_Pin));
-	HAL_GPIO_WritePin(out3_GPIO_Port, out3_Pin,
+	HAL_GPIO_WritePin(out03_GPIO_Port, out03_Pin,
 			HAL_GPIO_ReadPin(in13_GPIO_Port, in13_Pin));
-	HAL_GPIO_WritePin(out4_GPIO_Port, out4_Pin,
+	HAL_GPIO_WritePin(out04_GPIO_Port, out04_Pin,
 			HAL_GPIO_ReadPin(in14_GPIO_Port, in14_Pin));
-	HAL_GPIO_WritePin(out5_GPIO_Port, out5_Pin,
+	HAL_GPIO_WritePin(out05_GPIO_Port, out05_Pin,
 			HAL_GPIO_ReadPin(in15_GPIO_Port, in15_Pin));
-	HAL_GPIO_WritePin(out6_GPIO_Port, out6_Pin,
-			HAL_GPIO_ReadPin(in6_GPIO_Port, in6_Pin));
-	HAL_GPIO_WritePin(out7_GPIO_Port, out7_Pin,
-			HAL_GPIO_ReadPin(in7_GPIO_Port, in7_Pin));
+	HAL_GPIO_WritePin(out06_GPIO_Port, out06_Pin,
+			HAL_GPIO_ReadPin(in06_GPIO_Port, in06_Pin));
+	HAL_GPIO_WritePin(out07_GPIO_Port, out07_Pin,
+			HAL_GPIO_ReadPin(in07_GPIO_Port, in07_Pin));
 
   /* USER CODE END Error_Handler_Debug */
 }

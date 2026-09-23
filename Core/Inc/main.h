@@ -62,14 +62,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define out3_Pin GPIO_PIN_0
-#define out3_GPIO_Port GPIOA
+#define out03_Pin GPIO_PIN_0
+#define out03_GPIO_Port GPIOA
 #define out11_Pin GPIO_PIN_2
 #define out11_GPIO_Port GPIOA
 #define out10_Pin GPIO_PIN_6
 #define out10_GPIO_Port GPIOA
-#define out7_Pin GPIO_PIN_7
-#define out7_GPIO_Port GPIOA
+#define out07_Pin GPIO_PIN_7
+#define out07_GPIO_Port GPIOA
 #define in14_Pin GPIO_PIN_7
 #define in14_GPIO_Port GPIOE
 #define in15_Pin GPIO_PIN_8
@@ -82,32 +82,32 @@ void Error_Handler(void);
 #define in10_GPIO_Port GPIOE
 #define in11_Pin GPIO_PIN_12
 #define in11_GPIO_Port GPIOE
-#define in6_Pin GPIO_PIN_13
-#define in6_GPIO_Port GPIOE
-#define in7_Pin GPIO_PIN_14
-#define in7_GPIO_Port GPIOE
-#define in4_Pin GPIO_PIN_15
-#define in4_GPIO_Port GPIOE
-#define in5_Pin GPIO_PIN_10
-#define in5_GPIO_Port GPIOB
-#define in2_Pin GPIO_PIN_11
-#define in2_GPIO_Port GPIOB
-#define in3_Pin GPIO_PIN_12
-#define in3_GPIO_Port GPIOB
-#define in0_Pin GPIO_PIN_13
-#define in0_GPIO_Port GPIOB
-#define in1_Pin GPIO_PIN_14
-#define in1_GPIO_Port GPIOB
-#define out6_Pin GPIO_PIN_15
-#define out6_GPIO_Port GPIOB
-#define out5_Pin GPIO_PIN_12
-#define out5_GPIO_Port GPIOD
-#define out1_Pin GPIO_PIN_8
-#define out1_GPIO_Port GPIOC
-#define out0_Pin GPIO_PIN_9
-#define out0_GPIO_Port GPIOC
-#define out2_Pin GPIO_PIN_8
-#define out2_GPIO_Port GPIOA
+#define in06_Pin GPIO_PIN_13
+#define in06_GPIO_Port GPIOE
+#define in07_Pin GPIO_PIN_14
+#define in07_GPIO_Port GPIOE
+#define in04_Pin GPIO_PIN_15
+#define in04_GPIO_Port GPIOE
+#define in05_Pin GPIO_PIN_10
+#define in05_GPIO_Port GPIOB
+#define in02_Pin GPIO_PIN_11
+#define in02_GPIO_Port GPIOB
+#define in03_Pin GPIO_PIN_12
+#define in03_GPIO_Port GPIOB
+#define in00_Pin GPIO_PIN_13
+#define in00_GPIO_Port GPIOB
+#define in01_Pin GPIO_PIN_14
+#define in01_GPIO_Port GPIOB
+#define out06_Pin GPIO_PIN_15
+#define out06_GPIO_Port GPIOB
+#define out05_Pin GPIO_PIN_12
+#define out05_GPIO_Port GPIOD
+#define out01_Pin GPIO_PIN_8
+#define out01_GPIO_Port GPIOC
+#define out00_Pin GPIO_PIN_9
+#define out00_GPIO_Port GPIOC
+#define out02_Pin GPIO_PIN_8
+#define out02_GPIO_Port GPIOA
 #define rs232_tx1_Pin GPIO_PIN_9
 #define rs232_tx1_GPIO_Port GPIOA
 #define rs232_rx1_Pin GPIO_PIN_10
@@ -122,8 +122,8 @@ void Error_Handler(void);
 #define rs485_TX_GPIO_Port GPIOC
 #define rs485_RX_Pin GPIO_PIN_11
 #define rs485_RX_GPIO_Port GPIOC
-#define out4_Pin GPIO_PIN_3
-#define out4_GPIO_Port GPIOB
+#define out04_Pin GPIO_PIN_3
+#define out04_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
