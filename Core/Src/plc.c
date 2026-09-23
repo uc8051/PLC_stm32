@@ -22,9 +22,9 @@ void PLC_Run(void)
      */
 
     if (IN(1)) {
-        OUT(3, SET);
+        OUT(3, ON);
     } else {
-        OUT(3, RESET);
+        OUT(3, OFF);
     }
 
 
