@@ -42,6 +42,10 @@
 bool IO_InputGet(uint8_t bit);
 bool IO_OutputGet(uint8_t bit);
 void IO_OutputSet(uint8_t bit, bool state);
+uint8_t IO_GetInputGroup(uint8_t group);
+uint8_t IO_GetOutputGroup(uint8_t group);
+void IO_SetOutputGroup(uint8_t group, uint8_t value);
+
 
 void IO_ReadInputs(void);
 void IO_WriteOutputs(void);

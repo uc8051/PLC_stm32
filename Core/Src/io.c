@@ -96,3 +96,62 @@ void IO_WriteOutputs(void)
     HAL_GPIO_WritePin(out27_GPIO_Port, out27_Pin, (outputs & (1UL << 23)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #endif
 }
+
+uint8_t IO_GetInputGroup(uint8_t group)
+{
+    switch (group)
+    {
+        case 0:
+            return (uint8_t)(inputs & 0xFF);
+
+        case 1:
+            return (uint8_t)((inputs >> 8) & 0xFF);
+
+        case 2:
+            return (uint8_t)((inputs >> 16) & 0xFF);
+
+        default:
+            return 0;
+    }
+}
+
+
+uint8_t IO_GetOutputGroup(uint8_t group)
+{
+    switch (group)
+    {
+        case 0:
+            return (uint8_t)(outputs & 0xFF);
+
+        case 1:
+            return (uint8_t)((outputs >> 8) & 0xFF);
+
+        case 2:
+            return (uint8_t)((outputs >> 16) & 0xFF);
+
+        default:
+            return 0;
+    }
+}
+
+
+void IO_SetOutputGroup(uint8_t group, uint8_t value)
+{
+    switch (group)
+    {
+        case 0:
+            outputs &= ~0x000000FFUL;
+            outputs |= (uint32_t)value;
+            break;
+
+        case 1:
+            outputs &= ~0x0000FF00UL;
+            outputs |= ((uint32_t)value << 8);
+            break;
+
+        case 2:
+            outputs &= ~0x00FF0000UL;
+            outputs |= ((uint32_t)value << 16);
+            break;
+    }
+}

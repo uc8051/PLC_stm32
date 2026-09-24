@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "io.h"
 #include "plc.h"
 #include "rs485.h"
@@ -848,7 +849,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
         HAL_GPIO_WritePin(rs485_GPIO_Port, rs485_Pin, GPIO_PIN_RESET);
 
         // 2. Ponownie uruchamiamy nasłuchiwanie nowych zapytań od Mastera
-       HAL_UARTEx_ReceiveToIdle_DMA(&huart3, U3_RxBuffer, 256);
+        init_rx_rs485();
+       //HAL_UARTEx_ReceiveToIdle_DMA(&huart3, U3_RxBuffer, 256);
     }
 }
 
