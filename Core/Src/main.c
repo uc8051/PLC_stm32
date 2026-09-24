@@ -373,7 +373,7 @@ int main(void)
  // init_rx_rs485();
 
   PLC_Init();
-
+  init_rx_rs485();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -388,9 +388,8 @@ int main(void)
 
 		//ReadInputs();
 	    IO_ReadInputs();
-
 	    PLC_Run();
-
+	    rs485();
 	    IO_WriteOutputs();
 
 

@@ -25,8 +25,7 @@ if (U3_Received == 1)
 		    	unsigned char s_crc[10];
 		        U3_Received = 0; // Kasowanie flagi
 
-		        // 1. Skopiowanie odebranych bajtów z bufora RX do bufora TX.
-		        // Używamy zmiennej ModbusFrameLength, która przechowuje dokładną liczbę odebranych bajtów.
+
 		       if(U3_size_RX > 4)
 		       {
 		    	   memcpy(U3_TxBuffer, U3_RxBuffer,U3_size_RX);
