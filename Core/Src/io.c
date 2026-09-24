@@ -1,8 +1,8 @@
 #include "io.h"
 #include "main.h"
 
-static uint32_t inputs  = 0;
-static uint32_t outputs = 0;
+ uint32_t inputs  = 0;
+ uint32_t outputs = 0;
 
 bool IO_InputGet(uint8_t bit)
 {

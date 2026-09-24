@@ -296,18 +296,59 @@ void LogPLC(const char* prefix) {
 
     // Używamy snprintf do wszystkiego, aby uniknąć błędów z ręcznym inkrementowaniem
     pos += snprintf(&msg[pos], 250 - pos, "%.5s: in:", prefix);
+    // Wejścia - 24 bity
+    for (int i = 0; i < 24; i++)
+    {
+        char c = (inputs & (1UL << i)) ? '1' : '0';
 
-    // Wejścia
-    for(int i = 0; i <= 15; i++) {
-        char c = (in[i] == 2) ? '*' : (in[i] == 1 ? '1' : '0');
-        if(pos < 240) msg[pos++] = c;
+        if (pos < (int)sizeof(msg) - 1)
+            msg[pos++] = c;
+
+        // Separator po 4 bitach
+        if ((i + 1) % 4 == 0 && i != 23)
+        {
+            if ((i + 1) % 8 == 0)
+            {
+                // Po 8 bitach - dwie spacje
+                if (pos < (int)sizeof(msg) - 2)
+                {
+                    msg[pos++] = ' ';
+                    msg[pos++] = ' ';
+                }
+            }
+            else
+            {
+                // Po 4 bitach - jedna spacja
+                if (pos < (int)sizeof(msg) - 1)
+                    msg[pos++] = ' ';
+            }
+        }
     }
+    pos += snprintf(&msg[pos], sizeof(msg) - pos, " out:");
 
-    // Wyjścia
-    pos += snprintf(&msg[pos], 250 - pos, " out:");
-    for(int i = 0; i <= 11; i++) {
-        char c = (out[i] == 2) ? '*' : (out[i] == 1 ? '1' : '0');
-        if(pos < 240) msg[pos++] = c;
+    for (int i = 0; i < 24; i++)
+    {
+        char c = (outputs & (1UL << i)) ? '1' : '0';
+
+        if (pos < (int)sizeof(msg) - 1)
+            msg[pos++] = c;
+
+        if ((i + 1) % 4 == 0 && i != 23)
+        {
+            if ((i + 1) % 8 == 0)
+            {
+                if (pos < (int)sizeof(msg) - 2)
+                {
+                    msg[pos++] = ' ';
+                    msg[pos++] = ' ';
+                }
+            }
+            else
+            {
+                if (pos < (int)sizeof(msg) - 1)
+                    msg[pos++] = ' ';
+            }
+        }
     }
 
     // ADC w HEX

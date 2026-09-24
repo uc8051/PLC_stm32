@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include "board.h"
 
+extern uint32_t inputs;
+extern uint32_t outputs;
+
 #define ON   true
 #define OFF  false
 
