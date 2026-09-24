@@ -391,6 +391,7 @@ int main(void)
 	    IO_ReadInputs();
 	    PLC_Run();
 	    rs485();
+	    rs485_watchdog();
 	    IO_WriteOutputs();
 
 
@@ -831,7 +832,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         timer_ready = 1; // Ustaw flagę co 100ms
     }
 }
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+/*void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if (huart->Instance == USART3)
     {
@@ -853,7 +854,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
        //HAL_UARTEx_ReceiveToIdle_DMA(&huart3, U3_RxBuffer, 256);
     }
 }
-
+*/
 
 /* USER CODE END 4 */
 

@@ -22,5 +22,6 @@ extern uint8_t U3_TxBuffer[256];
 
 void init_rx_rs485(void);
 void rs485(void);
-
+void rs485_1(void);
+void rs485_watchdog(void);
 #endif /* INC_RS485_H_ */

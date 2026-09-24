@@ -27,36 +27,36 @@ void IO_ReadInputs(void)
 {
     uint32_t temp = 0;
 
-    /* IN 00..07 */
-    if (HAL_GPIO_ReadPin(in00_GPIO_Port, in00_Pin) == GPIO_PIN_SET) temp |= (1UL << 0);
-    if (HAL_GPIO_ReadPin(in01_GPIO_Port, in01_Pin) == GPIO_PIN_SET) temp |= (1UL << 1);
-    if (HAL_GPIO_ReadPin(in02_GPIO_Port, in02_Pin) == GPIO_PIN_SET) temp |= (1UL << 2);
-    if (HAL_GPIO_ReadPin(in03_GPIO_Port, in03_Pin) == GPIO_PIN_SET) temp |= (1UL << 3);
-    if (HAL_GPIO_ReadPin(in04_GPIO_Port, in04_Pin) == GPIO_PIN_SET) temp |= (1UL << 4);
-    if (HAL_GPIO_ReadPin(in05_GPIO_Port, in05_Pin) == GPIO_PIN_SET) temp |= (1UL << 5);
-    if (HAL_GPIO_ReadPin(in06_GPIO_Port, in06_Pin) == GPIO_PIN_SET) temp |= (1UL << 6);
-    if (HAL_GPIO_ReadPin(in07_GPIO_Port, in07_Pin) == GPIO_PIN_SET) temp |= (1UL << 7);
+    if (HAL_GPIO_ReadPin(in00_GPIO_Port, in00_Pin) == GPIO_PIN_RESET) temp |= (1UL << 0);
+    if (HAL_GPIO_ReadPin(in01_GPIO_Port, in01_Pin) == GPIO_PIN_RESET) temp |= (1UL << 1);
+    if (HAL_GPIO_ReadPin(in02_GPIO_Port, in02_Pin) == GPIO_PIN_RESET) temp |= (1UL << 2);
+    if (HAL_GPIO_ReadPin(in03_GPIO_Port, in03_Pin) == GPIO_PIN_RESET) temp |= (1UL << 3);
+    if (HAL_GPIO_ReadPin(in04_GPIO_Port, in04_Pin) == GPIO_PIN_RESET) temp |= (1UL << 4);
+    if (HAL_GPIO_ReadPin(in05_GPIO_Port, in05_Pin) == GPIO_PIN_RESET) temp |= (1UL << 5);
+    if (HAL_GPIO_ReadPin(in06_GPIO_Port, in06_Pin) == GPIO_PIN_RESET) temp |= (1UL << 6);
+    if (HAL_GPIO_ReadPin(in07_GPIO_Port, in07_Pin) == GPIO_PIN_RESET) temp |= (1UL << 7);
 
-    /* IN 10..15 */
-    if (HAL_GPIO_ReadPin(in10_GPIO_Port, in10_Pin) == GPIO_PIN_SET) temp |= (1UL << 8);
-    if (HAL_GPIO_ReadPin(in11_GPIO_Port, in11_Pin) == GPIO_PIN_SET) temp |= (1UL << 9);
-    if (HAL_GPIO_ReadPin(in12_GPIO_Port, in12_Pin) == GPIO_PIN_SET) temp |= (1UL << 10);
-    if (HAL_GPIO_ReadPin(in13_GPIO_Port, in13_Pin) == GPIO_PIN_SET) temp |= (1UL << 11);
-    if (HAL_GPIO_ReadPin(in14_GPIO_Port, in14_Pin) == GPIO_PIN_SET) temp |= (1UL << 12);
-    if (HAL_GPIO_ReadPin(in15_GPIO_Port, in15_Pin) == GPIO_PIN_SET) temp |= (1UL << 13);
+    if (HAL_GPIO_ReadPin(in10_GPIO_Port, in10_Pin) == GPIO_PIN_RESET) temp |= (1UL << 8);
+    if (HAL_GPIO_ReadPin(in11_GPIO_Port, in11_Pin) == GPIO_PIN_RESET) temp |= (1UL << 9);
+    if (HAL_GPIO_ReadPin(in12_GPIO_Port, in12_Pin) == GPIO_PIN_RESET) temp |= (1UL << 10);
+    if (HAL_GPIO_ReadPin(in13_GPIO_Port, in13_Pin) == GPIO_PIN_RESET) temp |= (1UL << 11);
+    if (HAL_GPIO_ReadPin(in14_GPIO_Port, in14_Pin) == GPIO_PIN_RESET) temp |= (1UL << 12);
+    if (HAL_GPIO_ReadPin(in15_GPIO_Port, in15_Pin) == GPIO_PIN_RESET) temp |= (1UL << 13);
 
 #if PCB_VERSION == PCB_24
-    /* Te nazwy GPIO dopisz/ustaw w CubeMX dla wersji PCB_24. */
-    if (HAL_GPIO_ReadPin(in16_GPIO_Port, in16_Pin) == GPIO_PIN_SET) temp |= (1UL << 14);
-    if (HAL_GPIO_ReadPin(in17_GPIO_Port, in17_Pin) == GPIO_PIN_SET) temp |= (1UL << 15);
-    if (HAL_GPIO_ReadPin(in20_GPIO_Port, in20_Pin) == GPIO_PIN_SET) temp |= (1UL << 16);
-    if (HAL_GPIO_ReadPin(in21_GPIO_Port, in21_Pin) == GPIO_PIN_SET) temp |= (1UL << 17);
-    if (HAL_GPIO_ReadPin(in22_GPIO_Port, in22_Pin) == GPIO_PIN_SET) temp |= (1UL << 18);
-    if (HAL_GPIO_ReadPin(in23_GPIO_Port, in23_Pin) == GPIO_PIN_SET) temp |= (1UL << 19);
-    if (HAL_GPIO_ReadPin(in24_GPIO_Port, in24_Pin) == GPIO_PIN_SET) temp |= (1UL << 20);
-    if (HAL_GPIO_ReadPin(in25_GPIO_Port, in25_Pin) == GPIO_PIN_SET) temp |= (1UL << 21);
-    if (HAL_GPIO_ReadPin(in26_GPIO_Port, in26_Pin) == GPIO_PIN_SET) temp |= (1UL << 22);
-    if (HAL_GPIO_ReadPin(in27_GPIO_Port, in27_Pin) == GPIO_PIN_SET) temp |= (1UL << 23);
+
+    if (HAL_GPIO_ReadPin(in16_GPIO_Port, in16_Pin) == GPIO_PIN_RESET) temp |= (1UL << 14);
+    if (HAL_GPIO_ReadPin(in17_GPIO_Port, in17_Pin) == GPIO_PIN_RESET) temp |= (1UL << 15);
+
+    if (HAL_GPIO_ReadPin(in20_GPIO_Port, in20_Pin) == GPIO_PIN_RESET) temp |= (1UL << 16);
+    if (HAL_GPIO_ReadPin(in21_GPIO_Port, in21_Pin) == GPIO_PIN_RESET) temp |= (1UL << 17);
+    if (HAL_GPIO_ReadPin(in22_GPIO_Port, in22_Pin) == GPIO_PIN_RESET) temp |= (1UL << 18);
+    if (HAL_GPIO_ReadPin(in23_GPIO_Port, in23_Pin) == GPIO_PIN_RESET) temp |= (1UL << 19);
+    if (HAL_GPIO_ReadPin(in24_GPIO_Port, in24_Pin) == GPIO_PIN_RESET) temp |= (1UL << 20);
+    if (HAL_GPIO_ReadPin(in25_GPIO_Port, in25_Pin) == GPIO_PIN_RESET) temp |= (1UL << 21);
+    if (HAL_GPIO_ReadPin(in26_GPIO_Port, in26_Pin) == GPIO_PIN_RESET) temp |= (1UL << 22);
+    if (HAL_GPIO_ReadPin(in27_GPIO_Port, in27_Pin) == GPIO_PIN_RESET) temp |= (1UL << 23);
+
 #endif
 
     inputs = temp;

@@ -11,10 +11,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-
+static void RS485_RestartRX(void);
 volatile uint8_t U3_Received = 0; // Flaga odebrania danych
 volatile uint16_t U3_size_RX = 0;  // Długość odebranej ramki
 volatile uint16_t U3_size_TX = 0;  // Długość nadawanej ramki
+volatile uint32_t U3_last_good_rx = 0;
+volatile uint8_t U3_force_restart = 0;
 uint8_t U3_RxBuffer[256];
 uint8_t U3_TxBuffer[256];
 
@@ -24,10 +26,8 @@ uint8_t U3_TxBuffer[256];
 #define CMD_WRITE_IO    0x0B
 
 
-void init_rx_rs485(void)
-{
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart3, U3_RxBuffer, 256);
-}
+
+
 /*void rs485(void)
 {
 if (U3_Received == 1)
@@ -68,38 +68,139 @@ if (U3_Received == 1)
 
 
 		    }
-}*/
+}
+*/
+static void RS485_RestartRX(void)
+{
+    U3_size_RX = 0;
+    U3_Received = 0;
+
+    HAL_GPIO_WritePin(
+        rs485_GPIO_Port,
+        rs485_Pin,
+        GPIO_PIN_RESET
+    );
+
+    HAL_UART_AbortReceive(&huart3);
+
+    __HAL_UART_CLEAR_OREFLAG(&huart3);
+    __HAL_UART_CLEAR_NEFLAG(&huart3);
+    __HAL_UART_CLEAR_FEFLAG(&huart3);
+    __HAL_UART_CLEAR_PEFLAG(&huart3);
+
+    U3_size_RX = 0;
+    U3_Received = 0;
+
+
+    HAL_UARTEx_ReceiveToIdle_DMA(
+        &huart3,
+        U3_RxBuffer,
+        sizeof(U3_RxBuffer)
+    );
+    //U3_last_good_rx = HAL_GetTick();
+}
+
+void init_rx_rs485(void)
+{
+	 U3_last_good_rx = HAL_GetTick();
+
+	 RS485_RestartRX();
+
+}
+
+
+
+
+static int8_t HexNibble(uint8_t c)
+{
+    if (c >= '0' && c <= '9')
+        return (int8_t)(c - '0');
+
+    if (c >= 'A' && c <= 'F')
+        return (int8_t)(c - 'A' + 10);
+
+    if (c >= 'a' && c <= 'f')
+        return (int8_t)(c - 'a' + 10);
+
+    return -1;
+}
+
+
+static uint8_t HexByte(uint8_t hi, uint8_t lo, uint8_t *value)
+{
+    int8_t h;
+    int8_t l;
+
+    h = HexNibble(hi);
+    l = HexNibble(lo);
+
+    if (h < 0 || l < 0)
+        return 0;
+
+    *value = (uint8_t)(((uint8_t)h << 4) | (uint8_t)l);
+
+    return 1;
+}
+
+
+static uint8_t RS485_CheckCRC(void)
+{
+    uint16_t crc;
+    char s_crc[5];
+
+    if (U3_size_RX < 5)
+        return 0;
+
+    crc = mmodbus_crc16(
+        U3_RxBuffer,
+        U3_size_RX - 4
+    );
+
+    sprintf(s_crc, "%04X", crc);
+
+    if (U3_RxBuffer[U3_size_RX - 4] != (uint8_t)s_crc[0])
+        return 0;
+
+    if (U3_RxBuffer[U3_size_RX - 3] != (uint8_t)s_crc[1])
+        return 0;
+
+    if (U3_RxBuffer[U3_size_RX - 2] != (uint8_t)s_crc[2])
+        return 0;
+
+    if (U3_RxBuffer[U3_size_RX - 1] != (uint8_t)s_crc[3])
+        return 0;
+
+    return 1;
+}
+
+
 static void RS485_SendStatus(void)
 {
     uint16_t crc;
 
-    /*
-     * Odpowiedź:
-     *
-     * [0] adres
-     * [1] IN  00..07
-     * [2] IN  10..17
-     * [3] IN  20..27
-     * [4] OUT 00..07
-     * [5] OUT 10..17
-     * [6] OUT 20..27
-     * [7..10] CRC ASCII
-     */
-
     U3_size_TX = 0;
 
-    U3_TxBuffer[U3_size_TX++] = PLC_ADDRESS;
+    U3_size_TX += sprintf(
+        (char *)&U3_TxBuffer[U3_size_TX],
+        "E1"
+        "%02X"
+        "%02X"
+        "%02X"
+        "%02X"
+        "%02X"
+        "%02X",
+        IO_GetInputGroup(0),
+        IO_GetInputGroup(1),
+        IO_GetInputGroup(2),
+        IO_GetOutputGroup(0),
+        IO_GetOutputGroup(1),
+        IO_GetOutputGroup(2)
+    );
 
-    U3_TxBuffer[U3_size_TX++] = IO_GetInputGroup(0);
-    U3_TxBuffer[U3_size_TX++] = IO_GetInputGroup(1);
-    U3_TxBuffer[U3_size_TX++] = IO_GetInputGroup(2);
-
-    U3_TxBuffer[U3_size_TX++] = IO_GetOutputGroup(0);
-    U3_TxBuffer[U3_size_TX++] = IO_GetOutputGroup(1);
-    U3_TxBuffer[U3_size_TX++] = IO_GetOutputGroup(2);
-
-
-    crc = mmodbus_crc16(U3_TxBuffer, U3_size_TX);
+    crc = mmodbus_crc16(
+        U3_TxBuffer,
+        U3_size_TX
+    );
 
     U3_size_TX += sprintf(
         (char *)&U3_TxBuffer[U3_size_TX],
@@ -107,8 +208,6 @@ static void RS485_SendStatus(void)
         crc
     );
 
-
-    /* RS485 -> nadawanie */
     HAL_GPIO_WritePin(
         rs485_GPIO_Port,
         rs485_Pin,
@@ -123,135 +222,177 @@ static void RS485_SendStatus(void)
 }
 
 
-static uint8_t RS485_CheckCRC(void)
-{
-    uint16_t crc;
-    char s_crc[5];
-
-    if (U3_size_RX < 6)
-        return 0;
-
-    /*
-     * Ostatnie 4 bajty ramki to CRC zapisane jako ASCII HEX.
-     */
-    crc = mmodbus_crc16(
-        U3_RxBuffer,
-        U3_size_RX - 4
-    );
-
-    sprintf(s_crc, "%04X", crc);
-
-    if ((U3_RxBuffer[U3_size_RX - 4] == (uint8_t)s_crc[0]) &&
-        (U3_RxBuffer[U3_size_RX - 3] == (uint8_t)s_crc[1]) &&
-        (U3_RxBuffer[U3_size_RX - 2] == (uint8_t)s_crc[2]) &&
-        (U3_RxBuffer[U3_size_RX - 1] == (uint8_t)s_crc[3]))
-    {
-        return 1;
-    }
-
-    return 0;
-}
-
-
 void rs485(void)
 {
-    uint8_t command;
+    uint8_t out0;
+    uint8_t out1;
+    uint8_t out2;
 
-    if (!U3_Received)
+    if (U3_Received == 0)
         return;
 
     U3_Received = 0;
 
 
-    /*
-     * Minimum:
-     *
-     * adres
-     * funkcja
-     * CRC = 4 bajty ASCII
-     *
-     * razem 6 bajtów
-     */
-    if (U3_size_RX < 6)
-        return;
+    // Minimalna poprawna ramka:
+    // E10A + 4 znaki CRC = 8 znakow
 
-
-    /* Czy ramka jest do tego sterownika? */
-    if (U3_RxBuffer[0] != PLC_ADDRESS)
-        return;
-
-
-    /* Kontrola CRC */
-    if (!RS485_CheckCRC())
-        return;
-
-
-    command = U3_RxBuffer[1];
-
-
-    switch (command)
+    if (U3_size_RX < 8)
     {
-        /* =============================================
-         * 0A - tylko odczyt IN/OUT
-         *
-         * M -> S:
-         * E1 0A CRC
-         * ============================================= */
-        case CMD_READ_IO:
-
-            /*
-             * Dokładnie:
-             * adres + funkcja + CRC
-             */
-            if (U3_size_RX != 6)
-                return;
-
-            RS485_SendStatus();
-
-            break;
+        RS485_RestartRX();
+        return;
+    }
 
 
-        /* =============================================
-         * 0B - ustaw OUT i odeślij aktualny stan
-         *
-         * M -> S:
-         *
-         * [0] E1
-         * [1] 0B
-         * [2] OUT 00..07
-         * [3] OUT 10..17
-         * [4] OUT 20..27
-         * [5..8] CRC
-         *
-         * razem 9 bajtów
-         * ============================================= */
-        case CMD_WRITE_IO:
+    // Adres E1
 
-            if (U3_size_RX != 9)
-                return;
+    if (U3_RxBuffer[0] != 'E')
+    {
+        RS485_RestartRX();
+        return;
+    }
+
+    if (U3_RxBuffer[1] != '1')
+    {
+        RS485_RestartRX();
+        return;
+    }
 
 
-            IO_SetOutputGroup(0, U3_RxBuffer[2]);
-            IO_SetOutputGroup(1, U3_RxBuffer[3]);
-            IO_SetOutputGroup(2, U3_RxBuffer[4]);
+    // CRC
+
+    if (!RS485_CheckCRC())
+    {
+        RS485_RestartRX();
+        return;
+    }
+    U3_last_good_rx = HAL_GetTick();
+
+    // Funkcja 0A
+    // Odczyt wszystkich wejsc i wyjsc
+    //
+    // Zapytanie:
+    // E10A + CRC
+    //
+    // Przyklad:
+    // E10AD790
+
+    if (U3_RxBuffer[2] == '0' &&
+        U3_RxBuffer[3] == 'A')
+    {
+        if (U3_size_RX != 8)
+        {
+            RS485_RestartRX();
+            return;
+        }
+
+        RS485_SendStatus();
+
+        return;
+    }
 
 
-            /*
-             * Fizycznie ustawiamy przekaźniki od razu.
-             */
-            IO_WriteOutputs();
+    // Funkcja 0B
+    // Ustawienie wyjsc i odeslanie aktualnego stanu
+    //
+    // Format:
+    // E10BFFFFFF + CRC
+    //
+    // OUT 00..07 = FF
+    // OUT 10..17 = FF
+    // OUT 20..27 = FF
+
+    if (U3_RxBuffer[2] == '0' &&
+        U3_RxBuffer[3] == 'B')
+    {
+        if (U3_size_RX != 14)
+        {
+            RS485_RestartRX();
+            return;
+        }
+
+        if (!HexByte(
+                U3_RxBuffer[4],
+                U3_RxBuffer[5],
+                &out0))
+        {
+            RS485_RestartRX();
+            return;
+        }
+
+        if (!HexByte(
+                U3_RxBuffer[6],
+                U3_RxBuffer[7],
+                &out1))
+        {
+            RS485_RestartRX();
+            return;
+        }
+
+        if (!HexByte(
+                U3_RxBuffer[8],
+                U3_RxBuffer[9],
+                &out2))
+        {
+            RS485_RestartRX();
+            return;
+        }
+
+        IO_SetOutputGroup(0, out0);
+        IO_SetOutputGroup(1, out1);
+        IO_SetOutputGroup(2, out2);
+
+        IO_WriteOutputs();
+
+        RS485_SendStatus();
+
+        return;
+    }
 
 
-            /*
-             * I odsyłamy aktualny IN + OUT.
-             */
-            RS485_SendStatus();
+    // Nieznana funkcja
 
-            break;
+    RS485_RestartRX();
+}
+void rs485_watchdog(void)
+{
+    if (U3_force_restart)
+    {
+        U3_force_restart = 0;
+        RS485_RestartRX();
+        return;
+    }
 
+    if ((HAL_GetTick() - U3_last_good_rx) >= 200)
+    {
+        RS485_RestartRX();
+    }
+}
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART3)
+    {
+        U3_force_restart = 1;
+    }
+}
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    if (huart->Instance == USART3)
+    {
+        U3_size_RX = Size;
+        U3_Received = 1;
+    }
+}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART3)
+    {
+        HAL_GPIO_WritePin(
+            rs485_GPIO_Port,
+            rs485_Pin,
+            GPIO_PIN_RESET
+        );
 
-        default:
-            /* Nieznana funkcja */
-            break;
+        RS485_RestartRX();
     }
 }
