@@ -132,6 +132,14 @@ void Error_Handler(void);
 #define rs485_RX_GPIO_Port GPIOC
 #define out04_Pin GPIO_PIN_3
 #define out04_GPIO_Port GPIOB
+#define out12_Pin GPIO_PIN_8
+#define out12_GPIO_Port GPIOB
+#define out13_Pin GPIO_PIN_9
+#define out13_GPIO_Port GPIOB
+#define out14_Pin GPIO_PIN_0
+#define out14_GPIO_Port GPIOE
+#define out15_Pin GPIO_PIN_1
+#define out15_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

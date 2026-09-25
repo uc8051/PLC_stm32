@@ -48,14 +48,14 @@ void IO_ReadInputs(void)
     if (HAL_GPIO_ReadPin(in16_GPIO_Port, in16_Pin) == GPIO_PIN_RESET) temp |= (1UL << 14);
     if (HAL_GPIO_ReadPin(in17_GPIO_Port, in17_Pin) == GPIO_PIN_RESET) temp |= (1UL << 15);
 
-    if (HAL_GPIO_ReadPin(in20_GPIO_Port, in20_Pin) == GPIO_PIN_RESET) temp |= (1UL << 16);
+    /*if (HAL_GPIO_ReadPin(in20_GPIO_Port, in20_Pin) == GPIO_PIN_RESET) temp |= (1UL << 16);
     if (HAL_GPIO_ReadPin(in21_GPIO_Port, in21_Pin) == GPIO_PIN_RESET) temp |= (1UL << 17);
     if (HAL_GPIO_ReadPin(in22_GPIO_Port, in22_Pin) == GPIO_PIN_RESET) temp |= (1UL << 18);
     if (HAL_GPIO_ReadPin(in23_GPIO_Port, in23_Pin) == GPIO_PIN_RESET) temp |= (1UL << 19);
     if (HAL_GPIO_ReadPin(in24_GPIO_Port, in24_Pin) == GPIO_PIN_RESET) temp |= (1UL << 20);
     if (HAL_GPIO_ReadPin(in25_GPIO_Port, in25_Pin) == GPIO_PIN_RESET) temp |= (1UL << 21);
     if (HAL_GPIO_ReadPin(in26_GPIO_Port, in26_Pin) == GPIO_PIN_RESET) temp |= (1UL << 22);
-    if (HAL_GPIO_ReadPin(in27_GPIO_Port, in27_Pin) == GPIO_PIN_RESET) temp |= (1UL << 23);
+    if (HAL_GPIO_ReadPin(in27_GPIO_Port, in27_Pin) == GPIO_PIN_RESET) temp |= (1UL << 23);*/
 
 #endif
 
@@ -86,14 +86,14 @@ void IO_WriteOutputs(void)
     HAL_GPIO_WritePin(out15_GPIO_Port, out15_Pin, (outputs & (1UL << 13)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out16_GPIO_Port, out16_Pin, (outputs & (1UL << 14)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out17_GPIO_Port, out17_Pin, (outputs & (1UL << 15)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out20_GPIO_Port, out20_Pin, (outputs & (1UL << 16)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    /*HAL_GPIO_WritePin(out20_GPIO_Port, out20_Pin, (outputs & (1UL << 16)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out21_GPIO_Port, out21_Pin, (outputs & (1UL << 17)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out22_GPIO_Port, out22_Pin, (outputs & (1UL << 18)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out23_GPIO_Port, out23_Pin, (outputs & (1UL << 19)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out24_GPIO_Port, out24_Pin, (outputs & (1UL << 20)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out25_GPIO_Port, out25_Pin, (outputs & (1UL << 21)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(out26_GPIO_Port, out26_Pin, (outputs & (1UL << 22)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(out27_GPIO_Port, out27_Pin, (outputs & (1UL << 23)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(out27_GPIO_Port, out27_Pin, (outputs & (1UL << 23)) ? GPIO_PIN_SET : GPIO_PIN_RESET);*/
 #endif
 }
 

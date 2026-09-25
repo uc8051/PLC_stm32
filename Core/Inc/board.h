@@ -10,6 +10,6 @@
 #define PCB_24  24
 
 /* Zmien tylko te linie przy wyborze wersji. */
-#define PCB_VERSION  PCB_14
+#define PCB_VERSION  PCB_24
 
 #endif /* INC_BOARD_H_ */
